@@ -87,17 +87,178 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    import sys
+    stateSet = []
+
+    stateStack = util.Stack() 
+    actionStack = util.Stack()
+    startState  = problem.getStartState()
+    stateStack.push(startState)
+    actionStack.push([])
+
+    while not stateStack.isEmpty():
+        popState = stateStack.pop()
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return actionStack.pop()
+        else:
+            routeHistory = actionStack.pop()
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if state not in stateSet:
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        stateStack.push(state)
+                        actionStack.push(currentRoute)
+    print "Unable to find a route"
+    sys.exit(1)
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    import sys
+    from sets import Set
+    stateSet = []
+
+    stateQueue = util.Queue()
+    actionQueue = util.Queue()
+    startState = problem.getStartState()
+    stateQueue.push(startState)
+    actionQueue.push([])
+
+    while not stateQueue.isEmpty():
+        popState = stateQueue.pop()
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return actionQueue.pop()
+        else:
+            routeHistory = actionQueue.pop()
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if (state not in stateSet) and (state not in stateQueue.list):
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        stateQueue.push(state)
+                        actionQueue.push(currentRoute)
+    print "Unable to find a route"
+    sys.exit(1)
+
+'''
+def breadthFirstSearch(problem):
+    """Search the shallowest nodes in the search tree first."""
+    import sys
+    from sets import Set
+    stateSet = Set([])
+
+    stateQueue = util.Queue()
+    actionQueue = util.Queue()
+    startState = problem.getStartState()
+    stateSet.add(startState)
+    stateQueue.push(startState)
+    actionQueue.push([])
+
+    while not stateQueue.isEmpty():
+        popState = stateQueue.pop()
+        if problem.isGoalState(popState):
+            return actionQueue.pop()
+        else:
+            routeHistory = actionQueue.pop()
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if state not in stateSet:
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        stateQueue.push(state)
+                        actionQueue.push(currentRoute)
+                        stateSet.add(state)
+    print "Unable to find a route"
+    sys.exit(1)
+'''
+
+'''
+def uniformCostSearch(problem):
+    """Search the node of least total cost first."""
+    import sys
+
+    stateSet = []
+    stateQueue = util.PriorityQueue()
+    actionQueue = util.PriorityQueue()
+    costQueue = util.PriorityQueue()
+
+    startState = problem.getStartState()
+    stateQueue.push(startState,0)
+    actionQueue.push([],0)
+    costQueue.push(0,0)
+
+    while not stateQueue.isEmpty():
+        popState = stateQueue.pop()
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return actionQueue.pop()
+        else:
+            costHistory = costQueue.pop()
+            routeHistory = actionQueue.pop()
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if (state not in stateSet):
+                        print "adding state",state
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        currentCost = costHistory + cost
+                        
+                        stateQueue.push(state,currentCost)
+                        actionQueue.push(currentRoute,currentCost)
+                        costQueue.push(currentCost,currentCost)
+
+    print "Unable to find a route"
+    sys.exit(1)
+'''
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    import sys
+
+    class Node:
+        def __init__(self,state,action,cost):
+            self.state = state
+            self.action = action
+            self.cost = cost
+
+
+
+    stateSet = []
+    stateQueue = util.PriorityQueue()
+
+    startState = problem.getStartState()
+    node = Node(startState,[],0)
+    stateQueue.push(node,0)
+
+    while not stateQueue.isEmpty():
+        popState = stateQueue.pop()
+        if popState.state in stateSet:
+            continue
+        stateSet.append(popState.state)
+        if problem.isGoalState(popState.state):
+            return popState.action 
+        else:
+            costHistory = popState.cost
+            routeHistory = popState.action 
+            successorStates = problem.getSuccessors(popState.state)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if (state not in stateSet):
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        currentCost = costHistory + cost
+                        
+                        stateQueue.push(Node(state,currentRoute,currentCost),currentCost)
+
+    print "Unable to find a route"
+    sys.exit(1)
 
 def nullHeuristic(state, problem=None):
     """
@@ -108,8 +269,41 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    import sys
+
+    stateSet = []
+    stateQueue = util.PriorityQueue()
+    actionQueue = util.PriorityQueue()
+    costQueue = util.PriorityQueue()
+
+    startState = problem.getStartState()
+    stateQueue.push(startState,0)
+    actionQueue.push([],0)
+    costQueue.push(0,0)
+
+    while not stateQueue.isEmpty():
+        popState = stateQueue.pop()
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return actionQueue.pop()
+        else:
+            routeHistory = actionQueue.pop()
+            costHistory = costQueue.pop()
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    if state not in stateSet:
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        currentCost = costHistory + cost
+                        currentCostHeur = currentCost + heuristic(state,problem)
+                        
+                        stateQueue.push(state,currentCostHeur)
+                        actionQueue.push(currentRoute,currentCostHeur)
+                        costQueue.push(currentCost,currentCostHeur)
+
+    print "Unable to find a route"
+    sys.exit(1)
 
 
 # Abbreviations

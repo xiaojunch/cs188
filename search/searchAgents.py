@@ -41,6 +41,9 @@ import util
 import time
 import search
 
+def manDist(A,B):
+    return abs(A[0]-B[0]) + abs(A[1]-B[1])
+
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
 
@@ -294,15 +297,26 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        state = []
+        state.append(self.startingPosition)
+
+        cornerState = {}
+        for corner in self.corners:
+            cornerState[corner] = 0
+
+        state.append(cornerState)
+        
+        return state
+
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        for corner in state[1]:
+            if state[1][corner] == 0:
+                return 0
+        return 1
 
     def getSuccessors(self, state):
         """
@@ -323,8 +337,19 @@ class CornersProblem(search.SearchProblem):
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
+            
+            x,y = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x+dx), int(y+dy)
+            if not self.walls[nextx][nexty]:
+                nextPosi = (nextx, nexty)
+                nextCornerState = state[1].copy()
+                if nextPosi in nextCornerState:
+                    nextCornerState[nextPosi] = 1
+                nextState = [nextPosi,nextCornerState]
+                cost = 1
+                successors.append( (nextState, action, cost) )
 
-            "*** YOUR CODE HERE ***"
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -360,8 +385,41 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    def toCorner(corners,pacPosit):
+        pacToCorner = []
+        for corner in corners:
+            pacToCorner.append(manDist(corner,pacPosit))
+        return min(pacToCorner)
 
+
+    currPosit = state[0]
+    visitCorners = []
+    for corner in state[1]:
+        if state[1][corner] == 0:
+            visitCorners.append(corner)
+
+    if len(visitCorners) == 0:
+        return 0
+    elif len(visitCorners) == 1:
+        return manDist(visitCorners[0],currPosit) 
+    elif len(visitCorners) == 2:
+        Corner1 = visitCorners[0]
+        Corner2 = visitCorners[1]
+        distToCorner = toCorner(visitCorners,currPosit)
+        CornerToCorner = manDist(Corner1,Corner2)
+        return distToCorner + CornerToCorner
+    elif len(visitCorners) == 3:
+        distToCorner = toCorner(visitCorners,currPosit)
+        CornerToCorner = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(max(visitCorners[:][0]),max(visitCorners[:][1])))
+        return distToCorner + CornerToCorner
+    elif len(visitCorners) == 4:
+        distToCorner = toCorner(visitCorners,currPosit)
+        side1 = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(min(visitCorners[:][0]),max(visitCorners[:][1])))
+        side2 = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(max(visitCorners[:][0]),min(visitCorners[:][1])))
+        CornerToCorner = side1 + side2 + min(side1,side2)
+        return distToCorner + CornerToCorner
+
+        
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
@@ -424,6 +482,7 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -452,9 +511,71 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+
+
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+
+    foodPosits = foodGrid.asList()
+    if not foodPosits:
+        return 0
+    elif len(foodPosits) == 1:
+        return manDist(position, foodPosits[0])
+    elif len(foodPosits) > 1:
+        '''
+        pacToFood = []
+        for foodPosit in foodPosits:
+            pacToFood.append(manDist(foodPosit,position))
+        pacToFoodNearest = min(pacToFood)
+
+        minFoodToFood = []
+        for foodPositSource in foodPosits:
+            tempFoodToFood = []
+            for foodPositDest in foodPosits:
+                d = manDist(foodPositSource,foodPositDest)
+                if d > 0:
+                    tempFoodToFood.append(d)
+            minFoodToFood.append(min(tempFoodToFood))
+        maxFoodToFood = max(minFoodToFood)
+        return pacToFoodNearest+sum(minFoodToFood)-maxFoodToFood
+
+        pacToFood = []
+        for foodPosit in foodPosits:
+            pacToFood.append(manDist(foodPosit,position))
+        pacToFoodNearest = min(pacToFood)
+        minFoodToFood = MinSpanTree(foodPosits)
+        return pacToFoodNearest+minFoodToFood
+        '''
+        return MinSpanTree([position]+foodPosits)
+        
+
+def MinSpanTree(vertList):
+    '''
+    implements the Min Spanning Tree algo
+    '''
+
+    import util
+    import heapq
+    # initialize the problem
+    if len(vertList) < 2:
+        return 0
+    
+    Visit = [vertList[0]]
+    NoVisit = util.PriorityQueue()
+    for vert in vertList[1:]:
+        dist = manDist(vert,Visit[0])
+        NoVisit.push(vert,dist)
+
+    # loop till NoVisit is empty
+    minDist = 0
+    while not NoVisit.isEmpty():
+        popEdge, _, popVert = heapq.heappop(NoVisit.heap)
+        minDist = minDist + popEdge
+        for _,_,vert in NoVisit.heap:
+            dist = manDist(vert,popVert)
+            NoVisit.update(vert,dist)
+
+    return minDist
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -485,7 +606,56 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        import util
+
+        stateQueue = util.PriorityQueue()
+        actionQueue = util.PriorityQueue()
+        costQueue = util.PriorityQueue()
+        stateSet = []
+        
+        stateSet.append(startPosition)
+        stateQueue.push(startPosition,0)
+        actionQueue.push([],0)
+        costQueue.push(0,0)
+
+        while not stateQueue.isEmpty():
+            popState = stateQueue.pop()
+            if problem.isGoalState(popState):
+                return actionQueue.pop()
+            else:
+                routeHistory = actionQueue.pop()
+                costHistory = costQueue.pop()
+                successorStates = problem.getSuccessors(popState)
+                if successorStates:
+                    for (state,action,cost) in successorStates:
+                        if state not in stateSet:
+                            currentRoute = routeHistory[:]
+                            currentRoute.append(action)
+                            currentCost = costHistory + cost
+                            heur = nearestFoodHeur(state,problem)
+                            currentCostHeur = currentCost + heur
+
+                            stateQueue.push(state,currentCostHeur)
+                            actionQueue.push(currentRoute,currentCostHeur)
+                            costQueue.push(currentCost,currentCostHeur)
+                            stateSet.append(state)
+
+        print "Unable to find a route"
+
+def nearestFoodHeur(state,problem):
+    ''' Find the nearest manhattan distance between the state and foods'''
+    foods = problem.food.asList()
+    
+    if len(foods) == 0:
+        return 0
+    elif len(foods) == 1:
+        return manDist(state,foods[0])
+    else:
+        pacToFood = []
+        for food in foods:
+            pacToFood.append(manDist(state,food))
+        return min(pacToFood)
+
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -521,7 +691,10 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if (x,y) in self.food.asList():
+            return 1
+        else:
+            return 0
 
 def mazeDistance(point1, point2, gameState):
     """
