@@ -366,10 +366,8 @@ class CornersProblem(search.SearchProblem):
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
         return len(actions)
-
-
+"""
 def cornersHeuristic(state, problem):
-    """
     A heuristic for the CornersProblem that you defined.
 
       state:   The current search state
@@ -380,11 +378,9 @@ def cornersHeuristic(state, problem):
     This function should always return a number that is a lower bound on the
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
-    """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
     def toCorner(corners,pacPosit):
         pacToCorner = []
         for corner in corners:
@@ -418,6 +414,26 @@ def cornersHeuristic(state, problem):
         side2 = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(max(visitCorners[:][0]),min(visitCorners[:][1])))
         CornerToCorner = side1 + side2 + min(side1,side2)
         return distToCorner + CornerToCorner
+"""
+
+def cornersHeuristic(state, problem):
+    corners = problem.corners # These are the corner coordinates
+    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+
+    "*** YOUR CODE HERE ***"
+    currPosit = state[0]
+    visitCorners = []
+    for corner in state[1]:
+        if state[1][corner] == 0:
+            visitCorners.append(corner)
+
+    if len(visitCorners) == 0:
+        return 0
+    else:
+        vertList = [currPosit]+visitCorners
+        return MinSpanTree(vertList)
+
+
 
         
 class AStarCornersAgent(SearchAgent):

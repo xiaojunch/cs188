@@ -118,144 +118,59 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     import sys
-    from sets import Set
     stateSet = []
 
     stateQueue = util.Queue()
-    actionQueue = util.Queue()
     startState = problem.getStartState()
-    stateQueue.push(startState)
-    actionQueue.push([])
+    stateQueue.push((startState,[]))
 
     while not stateQueue.isEmpty():
-        popState = stateQueue.pop()
-        stateSet.append(popState)
-        if problem.isGoalState(popState):
-            return actionQueue.pop()
-        else:
-            routeHistory = actionQueue.pop()
-            successorStates = problem.getSuccessors(popState)
-            if successorStates:
-                for (state,action,cost) in successorStates:
-                    if (state not in stateSet) and (state not in stateQueue.list):
-                        currentRoute = routeHistory[:]
-                        currentRoute.append(action)
-                        stateQueue.push(state)
-                        actionQueue.push(currentRoute)
-    print "Unable to find a route"
-    sys.exit(1)
-
-'''
-def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    import sys
-    from sets import Set
-    stateSet = Set([])
-
-    stateQueue = util.Queue()
-    actionQueue = util.Queue()
-    startState = problem.getStartState()
-    stateSet.add(startState)
-    stateQueue.push(startState)
-    actionQueue.push([])
-
-    while not stateQueue.isEmpty():
-        popState = stateQueue.pop()
-        if problem.isGoalState(popState):
-            return actionQueue.pop()
-        else:
-            routeHistory = actionQueue.pop()
-            successorStates = problem.getSuccessors(popState)
-            if successorStates:
-                for (state,action,cost) in successorStates:
-                    if state not in stateSet:
-                        currentRoute = routeHistory[:]
-                        currentRoute.append(action)
-                        stateQueue.push(state)
-                        actionQueue.push(currentRoute)
-                        stateSet.add(state)
-    print "Unable to find a route"
-    sys.exit(1)
-'''
-
-'''
-def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    import sys
-
-    stateSet = []
-    stateQueue = util.PriorityQueue()
-    actionQueue = util.PriorityQueue()
-    costQueue = util.PriorityQueue()
-
-    startState = problem.getStartState()
-    stateQueue.push(startState,0)
-    actionQueue.push([],0)
-    costQueue.push(0,0)
-
-    while not stateQueue.isEmpty():
-        popState = stateQueue.pop()
-        stateSet.append(popState)
-        if problem.isGoalState(popState):
-            return actionQueue.pop()
-        else:
-            costHistory = costQueue.pop()
-            routeHistory = actionQueue.pop()
-            successorStates = problem.getSuccessors(popState)
-            if successorStates:
-                for (state,action,cost) in successorStates:
-                    if (state not in stateSet):
-                        print "adding state",state
-                        currentRoute = routeHistory[:]
-                        currentRoute.append(action)
-                        currentCost = costHistory + cost
-                        
-                        stateQueue.push(state,currentCost)
-                        actionQueue.push(currentRoute,currentCost)
-                        costQueue.push(currentCost,currentCost)
-
-    print "Unable to find a route"
-    sys.exit(1)
-'''
-
-def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    import sys
-
-    class Node:
-        def __init__(self,state,action,cost):
-            self.state = state
-            self.action = action
-            self.cost = cost
-
-
-
-    stateSet = []
-    stateQueue = util.PriorityQueue()
-
-    startState = problem.getStartState()
-    node = Node(startState,[],0)
-    stateQueue.push(node,0)
-
-    while not stateQueue.isEmpty():
-        popState = stateQueue.pop()
-        if popState.state in stateSet:
+        popState,routeHistory = stateQueue.pop()
+        if popState in stateSet:
             continue
-        stateSet.append(popState.state)
-        if problem.isGoalState(popState.state):
-            return popState.action 
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return routeHistory
         else:
-            costHistory = popState.cost
-            routeHistory = popState.action 
-            successorStates = problem.getSuccessors(popState.state)
+            successorStates = problem.getSuccessors(popState)
             if successorStates:
                 for (state,action,cost) in successorStates:
-                    if (state not in stateSet):
+                    # if (state not in stateSet) and (state not in stateQueue.list):
+                    if 1:
+                        currentRoute = routeHistory[:]
+                        currentRoute.append(action)
+                        stateQueue.push((state,currentRoute))
+    print "Unable to find a route"
+    sys.exit(1)
+
+def uniformCostSearch(problem):
+    """Search the node of least total cost first."""
+    import sys
+
+    stateSet = []
+    stateQueue = util.PriorityQueue()
+
+    startState = problem.getStartState()
+    stateQueue.push((startState,[],0),0)
+
+    while not stateQueue.isEmpty():
+        popState, routeHistory, costHistory= stateQueue.pop()
+        if popState in stateSet:
+            continue
+        stateSet.append(popState)
+        if problem.isGoalState(popState):
+            return routeHistory 
+        else:
+            successorStates = problem.getSuccessors(popState)
+            if successorStates:
+                for (state,action,cost) in successorStates:
+                    # if (state not in stateSet):
+                    if 1:
                         currentRoute = routeHistory[:]
                         currentRoute.append(action)
                         currentCost = costHistory + cost
                         
-                        stateQueue.push(Node(state,currentRoute,currentCost),currentCost)
+                        stateQueue.push((state,currentRoute,currentCost),currentCost)
 
     print "Unable to find a route"
     sys.exit(1)
@@ -273,34 +188,29 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     stateSet = []
     stateQueue = util.PriorityQueue()
-    actionQueue = util.PriorityQueue()
-    costQueue = util.PriorityQueue()
 
     startState = problem.getStartState()
-    stateQueue.push(startState,0)
-    actionQueue.push([],0)
-    costQueue.push(0,0)
+    stateQueue.push((startState,[],0),0)
 
     while not stateQueue.isEmpty():
-        popState = stateQueue.pop()
+        popState, routeHistory, costHistory = stateQueue.pop()
+        if popState in stateSet:
+            continue
         stateSet.append(popState)
         if problem.isGoalState(popState):
-            return actionQueue.pop()
+            return routeHistory
         else:
-            routeHistory = actionQueue.pop()
-            costHistory = costQueue.pop()
             successorStates = problem.getSuccessors(popState)
             if successorStates:
                 for (state,action,cost) in successorStates:
-                    if state not in stateSet:
+                    # if state not in stateSet:
+                    if 1:
                         currentRoute = routeHistory[:]
                         currentRoute.append(action)
                         currentCost = costHistory + cost
                         currentCostHeur = currentCost + heuristic(state,problem)
                         
-                        stateQueue.push(state,currentCostHeur)
-                        actionQueue.push(currentRoute,currentCostHeur)
-                        costQueue.push(currentCost,currentCostHeur)
+                        stateQueue.push((state,currentRoute,currentCost),currentCostHeur)
 
     print "Unable to find a route"
     sys.exit(1)
