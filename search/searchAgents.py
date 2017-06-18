@@ -366,55 +366,6 @@ class CornersProblem(search.SearchProblem):
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
         return len(actions)
-"""
-def cornersHeuristic(state, problem):
-    A heuristic for the CornersProblem that you defined.
-
-      state:   The current search state
-               (a data structure you chose in your search problem)
-
-      problem: The CornersProblem instance for this layout.
-
-    This function should always return a number that is a lower bound on the
-    shortest path from the state to a goal of the problem; i.e.  it should be
-    admissible (as well as consistent).
-    corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-    def toCorner(corners,pacPosit):
-        pacToCorner = []
-        for corner in corners:
-            pacToCorner.append(manDist(corner,pacPosit))
-        return min(pacToCorner)
-
-
-    currPosit = state[0]
-    visitCorners = []
-    for corner in state[1]:
-        if state[1][corner] == 0:
-            visitCorners.append(corner)
-
-    if len(visitCorners) == 0:
-        return 0
-    elif len(visitCorners) == 1:
-        return manDist(visitCorners[0],currPosit) 
-    elif len(visitCorners) == 2:
-        Corner1 = visitCorners[0]
-        Corner2 = visitCorners[1]
-        distToCorner = toCorner(visitCorners,currPosit)
-        CornerToCorner = manDist(Corner1,Corner2)
-        return distToCorner + CornerToCorner
-    elif len(visitCorners) == 3:
-        distToCorner = toCorner(visitCorners,currPosit)
-        CornerToCorner = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(max(visitCorners[:][0]),max(visitCorners[:][1])))
-        return distToCorner + CornerToCorner
-    elif len(visitCorners) == 4:
-        distToCorner = toCorner(visitCorners,currPosit)
-        side1 = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(min(visitCorners[:][0]),max(visitCorners[:][1])))
-        side2 = manDist((min(visitCorners[:][0]),min(visitCorners[:][1])),(max(visitCorners[:][0]),min(visitCorners[:][1])))
-        CornerToCorner = side1 + side2 + min(side1,side2)
-        return distToCorner + CornerToCorner
-"""
 
 def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
@@ -430,12 +381,14 @@ def cornersHeuristic(state, problem):
     if len(visitCorners) == 0:
         return 0
     else:
-        vertList = [currPosit]+visitCorners
-        return MinSpanTree(vertList)
+        pacToCorner = []
+        for corner in visitCorners:
+            pacToCorner.append(manDist(corner,currPosit))
+        if len(pacToCorner) == 1:
+            return pacToCorner[0]
+        else:
+            return max(pacToCorner)
 
-
-
-        
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
@@ -537,31 +490,11 @@ def foodHeuristic(state, problem):
     elif len(foodPosits) == 1:
         return manDist(position, foodPosits[0])
     elif len(foodPosits) > 1:
-        '''
-        pacToFood = []
-        for foodPosit in foodPosits:
-            pacToFood.append(manDist(foodPosit,position))
-        pacToFoodNearest = min(pacToFood)
-
-        minFoodToFood = []
-        for foodPositSource in foodPosits:
-            tempFoodToFood = []
-            for foodPositDest in foodPosits:
-                d = manDist(foodPositSource,foodPositDest)
-                if d > 0:
-                    tempFoodToFood.append(d)
-            minFoodToFood.append(min(tempFoodToFood))
-        maxFoodToFood = max(minFoodToFood)
-        return pacToFoodNearest+sum(minFoodToFood)-maxFoodToFood
-
-        pacToFood = []
-        for foodPosit in foodPosits:
-            pacToFood.append(manDist(foodPosit,position))
-        pacToFoodNearest = min(pacToFood)
-        minFoodToFood = MinSpanTree(foodPosits)
-        return pacToFoodNearest+minFoodToFood
-        '''
-        return MinSpanTree([position]+foodPosits)
+        side1 = max([foodPosit[0] for foodPosit in foodPosits]) - min([foodPosit[0] for foodPosit in foodPosits])
+        side2 = max([foodPosit[1] for foodPosit in foodPosits]) - min([foodPosit[1] for foodPosit in foodPosits])
+        pacToFood1 = min(abs(position[0]-max([foodPosit[0] for foodPosit in foodPosits])),abs(position[0]-min([foodPosit[0] for foodPosit in foodPosits])))
+        pacToFood2 = min(abs(position[1]-max([foodPosit[1] for foodPosit in foodPosits])),abs(position[1]-min([foodPosit[1] for foodPosit in foodPosits])))
+        return pacToFood1 + pacToFood2 + side1 + side2
         
 
 def MinSpanTree(vertList):
